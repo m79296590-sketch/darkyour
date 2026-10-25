@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Открыть терминал здесь</name>
+	<submenu></submenu>
+	<unique-id>1700000000000001-1</unique-id>
+	<command>exo-open --working-directory %f --launch TerminalEmulator</command>
+	<description>Открыть терминал в этой папке</description>
+	<range></range>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+</action>
+<action>
+	<icon>edit-clear-all</icon>
+	<name>Удалить метаданные (отправить безопасно)</name>
+	<submenu></submenu>
+	<unique-id>1700000000000002-2</unique-id>
+	<command>darkyour-clean-meta %F</command>
+	<description>Убрать геолокацию, модель устройства, автора и другие скрытые данные</description>
+	<range></range>
+	<patterns>*</patterns>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+</actions>

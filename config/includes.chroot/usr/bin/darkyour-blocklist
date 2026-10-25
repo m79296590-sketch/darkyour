@@ -6,6 +6,7 @@ LIST=/usr/share/darkyour/blocklist.hosts
 MARK="# >>> DarkYour blocklist >>>"
 
 [ -s "$LIST" ] || exit 0
+[ -f /etc/darkyour/blocklist-disabled ] && exit 0
 grep -qF "$MARK" /etc/hosts 2>/dev/null && exit 0
 
 {

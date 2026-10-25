@@ -1,0 +1,11 @@
+#!/bin/sh
+# DarkYour: в виртуальной машине отключаем эффекты окон (прозрачность, тени) — так нет лагов.
+# Срабатывает один раз; включить обратно можно в «Настройки DarkYour».
+FLAG="$HOME/.config/darkyour/perf-checked"
+[ -f "$FLAG" ] && exit 0
+mkdir -p "$HOME/.config/darkyour"
+touch "$FLAG"
+if systemd-detect-virt -q 2>/dev/null; then
+	xfconf-query -c xfwm4 -p /general/use_compositing -s false 2>/dev/null || true
+	notify-send -i dy-settings "DarkYour" "Похоже, это виртуальная машина — эффекты окон отключены, чтобы не было лагов." 2>/dev/null || true
+fi

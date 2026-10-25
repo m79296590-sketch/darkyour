@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Паник-кнопка
+Comment=Выключить звук, закрыть браузер, очистить буфер и заблокировать экран (Win + Esc)
+Exec=darkyour-panic
+Icon=dy-shield
+Terminal=false
+Categories=System;Security;

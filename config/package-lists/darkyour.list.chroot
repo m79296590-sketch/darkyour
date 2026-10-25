@@ -83,3 +83,21 @@ plymouth-label
 
 # ===== 1.2: Тёмный режим для новых приложений (GTK4) =====
 dconf-cli
+
+# ===== 1.3: Приватность =====
+keepassxc
+sirikali
+gocryptfs
+mat2
+torbrowser-launcher
+xclip
+wmctrl
+libnotify-bin
+
+# ===== 1.3: Игры (Steam и Wine ставятся в хуке — им нужна i386) =====
+gamemode
+mangohud
+
+# ===== 1.3: Удобства =====
+timeshift
+redshift

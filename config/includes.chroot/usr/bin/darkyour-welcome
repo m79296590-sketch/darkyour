@@ -125,8 +125,8 @@ class Welcome(Gtk.Window):
             inst.connect("clicked", lambda *_: run(["sh", "-c", "sudo -E calamares || pkexec calamares"]))
             actions.pack_start(inst, False, False, 0)
         for label, cmd in [
-            ("Настройки", ["xfce4-settings-manager"]),
-            ("Фаервол", ["gufw"]),
+            ("Настройки", ["darkyour-settings"]),
+            ("Пароли", ["keepassxc"]),
             ("Браузер", ["firefox-esr"]),
         ]:
             b = Gtk.Button(label=label)

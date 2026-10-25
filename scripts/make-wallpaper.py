@@ -37,8 +37,9 @@ def ribbon(W, d, color, n, y_fn, spread_fn, env_fn, width, a_hi, a_lo):
             prev = pt
 
 
-def make(W, H):
+def make(W, H, A=CYAN, B=VIOLET, waves=True):
     k = W / 1920
+    CYAN, VIOLET = A, B
     img = Image.new("RGBA", (W, H), BG + (255,))
 
     # мягкие пятна цвета
@@ -66,6 +67,8 @@ def make(W, H):
         img.alpha_composite(g)
         img.alpha_composite(lay)
 
+    if not waves:
+        return finish(img, W, H, k)
     # бирюзовая «чаша» слева
     layer(
         CYAN, 16,
@@ -92,6 +95,10 @@ def make(W, H):
         8,
     )
 
+    return finish(img, W, H, k)
+
+
+def finish(img, W, H, k):
     # точки-«звёзды»
     random.seed(11)
     d = ImageDraw.Draw(img)
@@ -108,7 +115,36 @@ def make(W, H):
     return img.convert("RGB")
 
 
+
+
+LOGO = "config/includes.chroot/usr/share/darkyour/darkyour-logo-512.png"
+
+
+def minimal(W, H):
+    img = make(W, H, waves=False).convert("RGBA")
+    lg = Image.open(LOGO).convert("RGBA").resize((int(H * 0.34),) * 2, Image.LANCZOS)
+    a = lg.split()[3].point(lambda v: int(v * 0.22))
+    lg.putalpha(a)
+    img.alpha_composite(lg, ((W - lg.width) // 2, (H - lg.height) // 2 - int(H * 0.04)))
+    return img.convert("RGB")
+
+
+def aurora(W, H):
+    k = W / 1920
+    img = Image.new("RGBA", (W, H), (9, 9, 14, 255))
+    g = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(g)
+    d.ellipse([-W * 0.1, H * 0.25, W * 0.55, H * 0.95], fill=CYAN + (70,))
+    d.ellipse([W * 0.35, -H * 0.2, W * 1.05, H * 0.6], fill=VIOLET + (80,))
+    d.ellipse([W * 0.6, H * 0.55, W * 1.2, H * 1.3], fill=(236, 72, 153, 45))
+    img.alpha_composite(g.filter(ImageFilter.GaussianBlur(260 * k)))
+    return finish(img, W, H, k)
+
+
 if __name__ == "__main__":
     make(1920, 1080).save(f"{OUT}/darkyour.png", optimize=True)
     make(2560, 1440).save(f"{OUT}/darkyour-2k.png", optimize=True)
+    make(1920, 1080, VIOLET, (236, 72, 153)).save(f"{OUT}/darkyour-violet.png", optimize=True)
+    minimal(1920, 1080).save(f"{OUT}/darkyour-minimal.png", optimize=True)
+    aurora(1920, 1080).save(f"{OUT}/darkyour-aurora.png", optimize=True)
     print("ok")

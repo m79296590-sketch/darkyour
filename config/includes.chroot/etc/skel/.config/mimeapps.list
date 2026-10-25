@@ -11,3 +11,7 @@ audio/mpeg=vlc.desktop;
 audio/flac=vlc.desktop;
 audio/ogg=vlc.desktop;
 x-scheme-handler/appstream=org.gnome.Software.desktop;
+application/x-ms-dos-executable=wine.desktop;
+application/x-msdownload=wine.desktop;
+application/vnd.microsoft.portable-executable=wine.desktop;
+application/x-msi=wine.desktop;

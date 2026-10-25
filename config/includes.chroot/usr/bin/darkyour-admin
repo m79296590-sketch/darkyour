@@ -1,0 +1,34 @@
+#!/bin/sh
+# DarkYour: действия, которым нужны права администратора (вызывается из «Настроек DarkYour»).
+# Использование: darkyour-admin firewall|trackers|mac on|off
+set -e
+what="$1"
+state="$2"
+
+case "$what:$state" in
+	firewall:on)  ufw --force enable ;;
+	firewall:off) ufw disable ;;
+	trackers:on)
+		rm -f /etc/darkyour/blocklist-disabled
+		/usr/bin/darkyour-blocklist
+		;;
+	trackers:off)
+		mkdir -p /etc/darkyour
+		touch /etc/darkyour/blocklist-disabled
+		sed -i '/# >>> DarkYour blocklist >>>/,/# <<< DarkYour blocklist <<</d' /etc/hosts
+		;;
+	mac:on)
+		[ -f /etc/NetworkManager/conf.d/90-darkyour-privacy.conf.disabled ] && \
+			mv /etc/NetworkManager/conf.d/90-darkyour-privacy.conf.disabled /etc/NetworkManager/conf.d/90-darkyour-privacy.conf
+		systemctl reload NetworkManager 2>/dev/null || true
+		;;
+	mac:off)
+		[ -f /etc/NetworkManager/conf.d/90-darkyour-privacy.conf ] && \
+			mv /etc/NetworkManager/conf.d/90-darkyour-privacy.conf /etc/NetworkManager/conf.d/90-darkyour-privacy.conf.disabled
+		systemctl reload NetworkManager 2>/dev/null || true
+		;;
+	*)
+		echo "Использование: darkyour-admin firewall|trackers|mac on|off" >&2
+		exit 2
+		;;
+esac

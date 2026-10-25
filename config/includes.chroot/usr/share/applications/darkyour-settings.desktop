@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Настройки DarkYour
+Comment=Оформление, защита, резервные копии
+Exec=darkyour-settings
+Icon=dy-settings
+Terminal=false
+Categories=Settings;System;
+StartupNotify=true

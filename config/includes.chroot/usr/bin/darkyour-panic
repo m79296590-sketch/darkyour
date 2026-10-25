@@ -1,0 +1,25 @@
+#!/bin/sh
+# DarkYour: «паник-кнопка» (Win + Esc)
+# Мгновенно: выключить звук, закрыть браузеры, очистить буфер обмена, закрыть окна, заблокировать экран.
+
+# 1. Звук — сразу в ноль
+pactl set-sink-mute @DEFAULT_SINK@ 1 2>/dev/null || true
+
+# 2. Браузеры закрываем жёстко, без вопроса «сохранить вкладки?»
+for p in firefox-esr firefox torbrowser tor-browser; do
+	pkill -9 -f "$p" 2>/dev/null || true
+done
+
+# 3. Буфер обмена
+if command -v xclip >/dev/null 2>&1; then
+	printf "" | xclip -selection clipboard
+	printf "" | xclip -selection primary
+fi
+
+# 4. Свернуть/закрыть остальные окна
+if command -v wmctrl >/dev/null 2>&1; then
+	wmctrl -k on 2>/dev/null || true
+fi
+
+# 5. Заблокировать экран
+xflock4 2>/dev/null || loginctl lock-session 2>/dev/null || true

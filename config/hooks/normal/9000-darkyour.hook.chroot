@@ -4,7 +4,7 @@ set -e
 echo "I: DarkYour hook start"
 
 # --- Права на наши программы ---
-chmod 755 /usr/bin/darkyour-welcome /usr/bin/darkyour-blocklist
+chmod 755 /usr/bin/darkyour-*
 
 # --- Название системы ---
 V=$(cat /usr/share/darkyour/version 2>/dev/null || echo "1.0")
@@ -152,6 +152,41 @@ if [ -f /etc/default/grub ]; then
 else
 	mkdir -p /etc/default/grub.d
 	printf 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"\nGRUB_DISTRIBUTOR="DarkYour"\n' > /etc/default/grub.d/90-darkyour.cfg
+fi
+
+
+# --- 1.3: Паник-кнопка на Win + Esc ---
+KS=/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml
+if [ -f "$KS" ] && ! grep -q darkyour-panic "$KS"; then
+	sed -i '0,/<property name="custom" type="empty">/s//&\n      <property name="\&lt;Super\&gt;Escape" type="string" value="darkyour-panic"\/>/' "$KS"
+fi
+
+# --- 1.3: Игры — Steam (с Proton внутри), Wine для .exe, Lutris ---
+export DEBIAN_FRONTEND=noninteractive
+dpkg --add-architecture i386
+apt-get update || true
+echo "steam steam/question select I AGREE" | debconf-set-selections
+echo "steam steam/license note ''" | debconf-set-selections
+echo "steam-installer steam/question select I AGREE" | debconf-set-selections
+apt-get install -y steam-installer || echo "W: Steam не установился"
+apt-get install -y wine wine64 wine32:i386 || apt-get install -y wine || echo "W: Wine не установился"
+apt-get install -y lutris || echo "W: Lutris нет в репозитории — будет через магазин"
+apt-get clean
+
+
+# --- 1.3: Варианты темы по акцентному цвету ---
+T=/usr/share/themes
+if [ -d "$T/DarkYour" ]; then
+	for v in "Violet:#a78bfa:#c4b5fd" "Red:#f7768e:#ff9fb0" "Green:#4ade80:#86efac"; do
+		name="${v%%:*}"; rest="${v#*:}"; col="${rest%%:*}"; hov="${rest#*:}"
+		rm -rf "$T/DarkYour-$name"
+		mkdir -p "$T/DarkYour-$name/gtk-3.0"
+		sed -e "s/@define-color dy_cyan      #22d3ee;/@define-color dy_cyan      $col;/" \
+			-e "s/#5ee3f5/$hov/g" "$T/DarkYour/gtk-3.0/gtk.css" > "$T/DarkYour-$name/gtk-3.0/gtk.css"
+		ln -sfn ../DarkYour/xfwm4 "$T/DarkYour-$name/xfwm4"
+		sed "s/^Name=DarkYour$/Name=DarkYour $name/; s/^GtkTheme=DarkYour$/GtkTheme=DarkYour-$name/" \
+			"$T/DarkYour/index.theme" > "$T/DarkYour-$name/index.theme"
+	done
 fi
 
 echo "I: DarkYour hook done"

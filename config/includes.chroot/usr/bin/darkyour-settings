@@ -1,0 +1,345 @@
+#!/usr/bin/env python3
+"""Настройки DarkYour — оформление, защита, система.
+Запуск без аргументов открывает окно; «--apply» при входе в систему применяет сохранённое (ночной режим)."""
+import glob
+import json
+import os
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # noqa: E402
+
+CONF_DIR = os.path.expanduser("~/.config/darkyour")
+CONF = os.path.join(CONF_DIR, "settings.json")
+WALL_DIR = "/usr/share/backgrounds/darkyour"
+LOGO = "/usr/share/darkyour/darkyour-logo-128.png"
+
+ACCENTS = [
+    ("Бирюзовый", "DarkYour", "#22d3ee", "teal"),
+    ("Фиолетовый", "DarkYour-Violet", "#a78bfa", "purple"),
+    ("Красный", "DarkYour-Red", "#f7768e", "red"),
+    ("Зелёный", "DarkYour-Green", "#4ade80", "green"),
+]
+WALL_NAMES = {
+    "darkyour.png": "Неоновые волны",
+    "darkyour-violet.png": "Фиолетовые волны",
+    "darkyour-minimal.png": "Минимализм",
+    "darkyour-aurora.png": "Сияние",
+}
+
+CSS = b"""
+window { background-color: #0b0b10; }
+.dy-side { background-color: #0d0d14; border-right: 1px solid #22223a; }
+.dy-page { padding: 24px 28px; }
+.dy-h1 { font-size: 22px; font-weight: 800; color: #ffffff; }
+.dy-h2 { font-size: 13px; font-weight: 700; color: #8a8aa3; margin-top: 10px; }
+.dy-card {
+  background-color: #13131c; border: 1px solid #24243a; border-radius: 14px;
+  padding: 12px 16px;
+}
+.dy-title { font-size: 14px; font-weight: 700; color: #ffffff; }
+.dy-sub { font-size: 12px; color: #8a8aa3; }
+.dy-swatch { border-radius: 12px; min-width: 42px; min-height: 42px; border: 2px solid transparent; }
+.dy-swatch-on { border-color: #ffffff; }
+.dy-wall { border-radius: 10px; border: 2px solid transparent; padding: 2px; background: transparent; }
+.dy-wall-on { border-color: #22d3ee; }
+"""
+
+
+def load():
+    try:
+        with open(CONF) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save(cfg):
+    os.makedirs(CONF_DIR, exist_ok=True)
+    with open(CONF, "w") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+
+def sh(cmd):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+
+
+def xfconf_get(channel, prop):
+    r = sh(["xfconf-query", "-c", channel, "-p", prop])
+    return r.stdout.strip() if r and r.returncode == 0 else ""
+
+
+def xfconf_set(channel, prop, value, vtype="string"):
+    r = sh(["xfconf-query", "-c", channel, "-p", prop, "-s", value])
+    if not r or r.returncode != 0:
+        sh(["xfconf-query", "-c", channel, "-p", prop, "-n", "-t", vtype, "-s", value])
+
+
+def admin(what, state):
+    """Сначала sudo без пароля (live-режим), иначе pkexec спросит пароль."""
+    r = sh(["sudo", "-n", "/usr/bin/darkyour-admin", what, state])
+    if r and r.returncode == 0:
+        return True
+    r = sh(["pkexec", "/usr/bin/darkyour-admin", what, state])
+    return bool(r and r.returncode == 0)
+
+
+def set_night(on):
+    if on:
+        sh(["redshift", "-P", "-O", "4200"])
+    else:
+        sh(["redshift", "-x"])
+
+
+def apply_saved():
+    cfg = load()
+    if cfg.get("night"):
+        set_night(True)
+
+
+# ---------- статусы защиты ----------
+def firewall_on():
+    try:
+        with open("/etc/ufw/ufw.conf") as f:
+            return any(l.strip().upper() == "ENABLED=YES" for l in f)
+    except OSError:
+        return False
+
+
+def trackers_on():
+    try:
+        with open("/etc/hosts") as f:
+            return "DarkYour blocklist" in f.read()
+    except OSError:
+        return False
+
+
+def mac_on():
+    return os.path.exists("/etc/NetworkManager/conf.d/90-darkyour-privacy.conf")
+
+
+class Settings(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="Настройки DarkYour")
+        self.set_default_size(860, 600)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        if os.path.exists(LOGO):
+            self.set_icon_from_file(LOGO)
+        self.cfg = load()
+
+        root = Gtk.Box()
+        self.add(root)
+        self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+        side = Gtk.StackSidebar(stack=self.stack)
+        side.set_size_request(200, -1)
+        side.get_style_context().add_class("dy-side")
+        root.pack_start(side, False, False, 0)
+        root.pack_start(self.stack, True, True, 0)
+
+        self.stack.add_titled(self.page_look(), "look", "Оформление")
+        self.stack.add_titled(self.page_protect(), "protect", "Защита")
+        self.stack.add_titled(self.page_system(), "system", "Система")
+
+    # ---------- общие элементы ----------
+    def page(self, title):
+        sc = Gtk.ScrolledWindow()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        box.get_style_context().add_class("dy-page")
+        h = Gtk.Label(label=title, xalign=0)
+        h.get_style_context().add_class("dy-h1")
+        box.pack_start(h, False, False, 0)
+        sc.add(box)
+        return sc, box
+
+    def h2(self, box, text):
+        l = Gtk.Label(label=text, xalign=0)
+        l.get_style_context().add_class("dy-h2")
+        box.pack_start(l, False, False, 0)
+
+    def row(self, title, sub, widget):
+        card = Gtk.Box(spacing=12)
+        card.get_style_context().add_class("dy-card")
+        texts = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        t = Gtk.Label(label=title, xalign=0)
+        t.get_style_context().add_class("dy-title")
+        s = Gtk.Label(label=sub, xalign=0)
+        s.set_line_wrap(True)
+        s.get_style_context().add_class("dy-sub")
+        texts.pack_start(t, False, False, 0)
+        texts.pack_start(s, False, False, 0)
+        card.pack_start(texts, True, True, 0)
+        widget.set_valign(Gtk.Align.CENTER)
+        card.pack_end(widget, False, False, 0)
+        return card
+
+    def switch(self, active, handler):
+        sw = Gtk.Switch(active=active)
+        sw.connect("state-set", handler)
+        return sw
+
+    def button(self, label, cmd):
+        b = Gtk.Button(label=label)
+        b.connect("clicked", lambda *_: subprocess.Popen(cmd, start_new_session=True))
+        return b
+
+    # ---------- Оформление ----------
+    def page_look(self):
+        sc, box = self.page("Оформление")
+
+        self.h2(box, "АКЦЕНТНЫЙ ЦВЕТ")
+        swatches = Gtk.Box(spacing=12)
+        current = xfconf_get("xsettings", "/Net/ThemeName") or "DarkYour"
+        self.swatch_btns = []
+        for name, theme, color, gtk4 in ACCENTS:
+            b = Gtk.Button()
+            b.set_tooltip_text(name)
+            prov = Gtk.CssProvider()
+            prov.load_from_data(f"button {{ background: {color}; }}".encode())
+            b.get_style_context().add_provider(prov, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
+            b.get_style_context().add_class("dy-swatch")
+            if theme == current:
+                b.get_style_context().add_class("dy-swatch-on")
+            b.connect("clicked", self.on_accent, theme, gtk4)
+            self.swatch_btns.append((b, theme))
+            swatches.pack_start(b, False, False, 0)
+        box.pack_start(swatches, False, False, 0)
+
+        self.h2(box, "ОБОИ")
+        flow = Gtk.FlowBox(max_children_per_line=4, selection_mode=Gtk.SelectionMode.NONE,
+                           column_spacing=10, row_spacing=10, homogeneous=True)
+        self.wall_btns = []
+        current_wall = self.cfg.get("wallpaper", "")
+        for path in sorted(glob.glob(os.path.join(WALL_DIR, "*.png"))):
+            base = os.path.basename(path)
+            if base.endswith("-2k.png"):
+                continue
+            try:
+                pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, 176, 99, True)
+            except GLib.Error:
+                continue
+            v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            b = Gtk.Button()
+            b.add(Gtk.Image.new_from_pixbuf(pb))
+            b.get_style_context().add_class("dy-wall")
+            if path == current_wall:
+                b.get_style_context().add_class("dy-wall-on")
+            b.connect("clicked", self.on_wall, path)
+            self.wall_btns.append((b, path))
+            v.pack_start(b, False, False, 0)
+            l = Gtk.Label(label=WALL_NAMES.get(base, base))
+            l.get_style_context().add_class("dy-sub")
+            v.pack_start(l, False, False, 0)
+            flow.add(v)
+        box.pack_start(flow, False, False, 0)
+
+        self.h2(box, "ЭКРАН")
+        box.pack_start(self.row("Ночной режим", "Тёплые цвета экрана — меньше нагрузка на глаза вечером",
+                                self.switch(bool(self.cfg.get("night")), self.on_night)), False, False, 0)
+        comp = xfconf_get("xfwm4", "/general/use_compositing").lower() == "true"
+        box.pack_start(self.row("Эффекты окон", "Тени и прозрачность. В виртуальной машине лучше выключить — будет быстрее",
+                                self.switch(comp, self.on_compositing)), False, False, 0)
+        return sc
+
+    def on_accent(self, _b, theme, gtk4):
+        xfconf_set("xsettings", "/Net/ThemeName", theme)
+        sh(["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", theme])
+        sh(["gsettings", "set", "org.gnome.desktop.interface", "accent-color", gtk4])
+        for b, t in self.swatch_btns:
+            ctx = b.get_style_context()
+            (ctx.add_class if t == theme else ctx.remove_class)("dy-swatch-on")
+
+    def on_wall(self, _b, path):
+        r = sh(["xfconf-query", "-c", "xfce4-desktop", "-l"])
+        props = [p for p in (r.stdout.split() if r else []) if p.endswith("/last-image")]
+        for p in props:
+            xfconf_set("xfce4-desktop", p, path)
+        self.cfg["wallpaper"] = path
+        save(self.cfg)
+        for b, p in self.wall_btns:
+            ctx = b.get_style_context()
+            (ctx.add_class if p == path else ctx.remove_class)("dy-wall-on")
+
+    def on_night(self, _sw, state):
+        set_night(state)
+        self.cfg["night"] = state
+        save(self.cfg)
+        return False
+
+    def on_compositing(self, _sw, state):
+        xfconf_set("xfwm4", "/general/use_compositing", "true" if state else "false", "bool")
+        return False
+
+    # ---------- Защита ----------
+    def page_protect(self):
+        sc, box = self.page("Защита")
+        self.h2(box, "ОСНОВНОЕ")
+        box.pack_start(self.row("Фаервол", "Закрывает все входящие подключения к компьютеру",
+                                self.switch(firewall_on(), lambda s, st: self.on_admin(s, st, "firewall"))), False, False, 0)
+        box.pack_start(self.row("Блокировка трекеров", "Реклама и слежка режутся во всех программах, не только в браузере",
+                                self.switch(trackers_on(), lambda s, st: self.on_admin(s, st, "trackers"))), False, False, 0)
+        box.pack_start(self.row("Случайный MAC-адрес", "В чужих Wi-Fi сетях твой ноутбук сложнее отследить",
+                                self.switch(mac_on(), lambda s, st: self.on_admin(s, st, "mac"))), False, False, 0)
+        box.pack_start(self.row("Без телеметрии", "Система ничего о тебе не отправляет. Всегда включено",
+                                Gtk.Label(label="ВКЛ")), False, False, 0)
+
+        self.h2(box, "ИНСТРУМЕНТЫ")
+        box.pack_start(self.row("Паник-кнопка", "Win + Esc: выключить звук, закрыть браузер, очистить буфер, заблокировать экран",
+                                self.button("Проверить", ["darkyour-panic"])), False, False, 0)
+        box.pack_start(self.row("Менеджер паролей", "KeePassXC — пароли хранятся только у тебя, в зашифрованном файле",
+                                self.button("Открыть", ["keepassxc"])), False, False, 0)
+        box.pack_start(self.row("Сейф", "Зашифрованная папка для личных файлов",
+                                self.button("Открыть", ["sirikali"])), False, False, 0)
+        box.pack_start(self.row("Tor Browser", "Анонимный браузер. При первом запуске скачается с сайта Tor",
+                                self.button("Открыть", ["torbrowser-launcher"])), False, False, 0)
+        box.pack_start(self.row("Удаление метаданных", "Правый клик по файлу → «Удалить метаданные»", Gtk.Label(label="")), False, False, 0)
+        self.h2(box, "СКОРО")
+        box.pack_start(self.row("DVS VPN", "Встроенный VPN в одном клике", Gtk.Label(label="СКОРО")), False, False, 0)
+        return sc
+
+    def on_admin(self, sw, state, what):
+        ok = admin(what, "on" if state else "off")
+        if not ok:
+            GLib.idle_add(sw.set_active, not state)
+        return False
+
+    # ---------- Система ----------
+    def page_system(self):
+        sc, box = self.page("Система")
+        try:
+            with open("/usr/share/darkyour/version") as f:
+                ver = f.read().strip()
+        except OSError:
+            ver = "?"
+        self.h2(box, "О СИСТЕМЕ")
+        box.pack_start(self.row(f"DarkYour {ver}", "Приватная ОС на базе Debian 13", Gtk.Label(label="")), False, False, 0)
+        self.h2(box, "ОБСЛУЖИВАНИЕ")
+        box.pack_start(self.row("Обновления", "Проверить и установить обновления системы и программ",
+                                self.button("Открыть", ["gnome-software", "--mode=updates"])), False, False, 0)
+        box.pack_start(self.row("Резервные копии", "Timeshift: снимок системы, чтобы откатиться, если что-то сломалось",
+                                self.button("Открыть", ["timeshift-launcher"])), False, False, 0)
+        box.pack_start(self.row("Все настройки", "Экран, клавиатура, мышь, сеть и прочее",
+                                self.button("Открыть", ["xfce4-settings-manager"])), False, False, 0)
+        return sc
+
+
+def main():
+    if "--apply" in sys.argv:
+        apply_saved()
+        return
+    prov = Gtk.CssProvider()
+    prov.load_from_data(CSS)
+    Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), prov, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    w = Settings()
+    w.connect("destroy", Gtk.main_quit)
+    w.show_all()
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    main()
