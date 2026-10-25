@@ -1,0 +1,13 @@
+[Unit]
+Description=DarkYour: блокировка трекеров и рекламы
+After=live-config.service local-fs.target
+Before=network-pre.target NetworkManager.service
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/darkyour-blocklist
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

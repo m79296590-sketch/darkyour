@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+"""DarkYour Welcome — приветственное окно при первом запуске."""
+import os
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gdk, GdkPixbuf, Gtk  # noqa: E402
+
+VERSION = "1.0"
+LOGO = "/usr/share/darkyour/darkyour-logo-128.png"
+CONF_DIR = os.path.expanduser("~/.config/darkyour")
+DONE_FLAG = os.path.join(CONF_DIR, "welcome-done")
+IS_LIVE = os.path.isdir("/run/live")
+
+CSS = b"""
+window { background-color: #0b0b10; color: #d6d6e0; }
+.title { font-size: 26px; font-weight: 800; color: #ffffff; }
+.title-accent { color: #22d3ee; }
+.subtitle { font-size: 13px; color: #8a8aa3; }
+.card {
+  background-color: #13131c; border: 1px solid #24243a; border-radius: 14px;
+  padding: 14px 16px;
+}
+.card-title { font-size: 14px; font-weight: 700; color: #ffffff; }
+.card-text { font-size: 12px; color: #8a8aa3; }
+.status-on { color: #22d3ee; font-weight: 700; font-size: 12px; }
+.status-off { color: #f7768e; font-weight: 700; font-size: 12px; }
+.status-soon { color: #a78bfa; font-weight: 700; font-size: 12px; }
+button.dy {
+  background-image: none; background-color: #15151f; color: #e8e8f0;
+  border: 1px solid #2c2c44; border-radius: 10px; padding: 8px 14px;
+  box-shadow: none; text-shadow: none;
+}
+button.dy:hover { border-color: #22d3ee; background-color: #172029; }
+button.dy-primary {
+  background-image: none; background-color: #22d3ee; color: #05060a;
+  border: none; border-radius: 10px; padding: 10px 18px; font-weight: 800;
+  box-shadow: none; text-shadow: none;
+}
+button.dy-primary:hover { background-color: #5ee3f5; }
+checkbutton { color: #8a8aa3; }
+"""
+
+
+def run(cmd):
+    try:
+        subprocess.Popen(cmd, start_new_session=True)
+    except FileNotFoundError:
+        pass
+
+
+def ufw_enabled():
+    try:
+        with open("/etc/ufw/ufw.conf") as f:
+            return any(l.strip().upper() == "ENABLED=YES" for l in f)
+    except OSError:
+        return False
+
+
+def blocklist_active():
+    try:
+        with open("/etc/hosts") as f:
+            return "DarkYour blocklist" in f.read()
+    except OSError:
+        return False
+
+
+def telemetry_off():
+    return not os.path.exists("/usr/sbin/popularity-contest")
+
+
+class Welcome(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="Добро пожаловать в DarkYour")
+        self.set_default_size(640, 600)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        if os.path.exists(LOGO):
+            self.set_icon_from_file(LOGO)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
+        root.set_border_width(28)
+        self.add(root)
+
+        # Шапка
+        head = Gtk.Box(spacing=18)
+        if os.path.exists(LOGO):
+            pb = GdkPixbuf.Pixbuf.new_from_file_at_size(LOGO, 84, 84)
+            head.pack_start(Gtk.Image.new_from_pixbuf(pb), False, False, 0)
+        htext = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        htext.set_valign(Gtk.Align.CENTER)
+        t = Gtk.Label(xalign=0)
+        t.set_markup('Добро пожаловать в <span foreground="#22d3ee">DarkYour</span>')
+        t.get_style_context().add_class("title")
+        s = Gtk.Label(label=f"Версия {VERSION} · приватность по умолчанию", xalign=0)
+        s.get_style_context().add_class("subtitle")
+        htext.pack_start(t, False, False, 0)
+        htext.pack_start(s, False, False, 0)
+        head.pack_start(htext, True, True, 0)
+        root.pack_start(head, False, False, 0)
+
+        # Карточки защиты
+        grid = Gtk.Grid(column_spacing=12, row_spacing=12, column_homogeneous=True)
+        cards = [
+            ("Фаервол", "Входящие подключения закрыты", ufw_enabled()),
+            ("Блокировка трекеров", "Реклама и слежка режутся на уровне системы", blocklist_active()),
+            ("Без телеметрии", "Система ничего о тебе не отправляет", telemetry_off()),
+            ("DVS VPN", "Встроенный VPN-клиент — в следующем обновлении", None),
+        ]
+        for i, (title, text, state) in enumerate(cards):
+            grid.attach(self.card(title, text, state), i % 2, i // 2, 1, 1)
+        root.pack_start(grid, False, False, 0)
+
+        # Кнопки
+        actions = Gtk.Box(spacing=10)
+        if IS_LIVE:
+            inst = Gtk.Button(label="Установить DarkYour на компьютер")
+            inst.get_style_context().add_class("dy-primary")
+            inst.connect("clicked", lambda *_: run(["sh", "-c", "sudo -E calamares || pkexec calamares"]))
+            actions.pack_start(inst, False, False, 0)
+        for label, cmd in [
+            ("Настройки", ["xfce4-settings-manager"]),
+            ("Фаервол", ["gufw"]),
+            ("Браузер", ["firefox-esr"]),
+        ]:
+            b = Gtk.Button(label=label)
+            b.get_style_context().add_class("dy")
+            b.connect("clicked", lambda _b, c=cmd: run(c))
+            actions.pack_start(b, False, False, 0)
+        root.pack_start(actions, False, False, 0)
+
+        tip = Gtk.Label(xalign=0)
+        tip.set_line_wrap(True)
+        tip.set_markup(
+            '<span foreground="#8a8aa3" size="small">Подсказка: язык клавиатуры переключается '
+            'сочетанием <b>Alt + Shift</b>. Меню приложений — кнопка с логотипом слева внизу.</span>'
+        )
+        root.pack_start(tip, False, False, 0)
+
+        # Низ окна
+        bottom = Gtk.Box(spacing=10)
+        self.autostart = Gtk.CheckButton(label="Показывать при запуске")
+        self.autostart.set_active(not os.path.exists(DONE_FLAG))
+        bottom.pack_start(self.autostart, False, False, 0)
+        close = Gtk.Button(label="Начать")
+        close.get_style_context().add_class("dy-primary")
+        close.connect("clicked", self.on_close)
+        bottom.pack_end(close, False, False, 0)
+        root.pack_end(bottom, False, False, 0)
+
+        self.connect("delete-event", self.on_close)
+
+    def card(self, title, text, state):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        box.get_style_context().add_class("card")
+        top = Gtk.Box(spacing=8)
+        tl = Gtk.Label(label=title, xalign=0)
+        tl.get_style_context().add_class("card-title")
+        top.pack_start(tl, True, True, 0)
+        if state is None:
+            st, cls = "СКОРО", "status-soon"
+        elif state:
+            st, cls = "ВКЛ", "status-on"
+        else:
+            st, cls = "ВЫКЛ", "status-off"
+        sl = Gtk.Label(label=st)
+        sl.get_style_context().add_class(cls)
+        top.pack_end(sl, False, False, 0)
+        box.pack_start(top, False, False, 0)
+        dl = Gtk.Label(label=text, xalign=0)
+        dl.set_line_wrap(True)
+        dl.get_style_context().add_class("card-text")
+        box.pack_start(dl, False, False, 0)
+        return box
+
+    def on_close(self, *_):
+        try:
+            os.makedirs(CONF_DIR, exist_ok=True)
+            if self.autostart.get_active():
+                if os.path.exists(DONE_FLAG):
+                    os.remove(DONE_FLAG)
+            else:
+                open(DONE_FLAG, "w").close()
+        except OSError:
+            pass
+        Gtk.main_quit()
+        return False
+
+
+def main():
+    if "--autostart" in sys.argv and os.path.exists(DONE_FLAG):
+        return
+    provider = Gtk.CssProvider()
+    provider.load_from_data(CSS)
+    Gtk.StyleContext.add_provider_for_screen(
+        Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    )
+    win = Welcome()
+    win.show_all()
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    main()

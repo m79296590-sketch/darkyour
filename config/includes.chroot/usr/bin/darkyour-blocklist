@@ -1,0 +1,16 @@
+#!/bin/sh
+# Добавляет список трекеров и рекламы в /etc/hosts (блокировка на уровне всей системы).
+# Live-система пересоздаёт /etc/hosts при загрузке, поэтому скрипт запускается при каждом старте.
+set -e
+LIST=/usr/share/darkyour/blocklist.hosts
+MARK="# >>> DarkYour blocklist >>>"
+
+[ -s "$LIST" ] || exit 0
+grep -qF "$MARK" /etc/hosts 2>/dev/null && exit 0
+
+{
+	echo ""
+	echo "$MARK"
+	cat "$LIST"
+	echo "# <<< DarkYour blocklist <<<"
+} >> /etc/hosts

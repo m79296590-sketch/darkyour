@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Браузер
+Comment=Firefox с защитой от слежки
+Exec=firefox-esr %u
+Icon=firefox-esr
+Terminal=false
+StartupNotify=true

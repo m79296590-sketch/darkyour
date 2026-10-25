@@ -1,0 +1,61 @@
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "DisableFeedbackCommands": true,
+    "DisableSetDesktopBackground": true,
+    "DontCheckDefaultBrowser": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "NoDefaultBookmarks": true,
+    "HttpsOnlyMode": "enabled",
+    "EnableTrackingProtection": {
+      "Value": true,
+      "Locked": false,
+      "Cryptomining": true,
+      "Fingerprinting": true,
+      "EmailTracking": true
+    },
+    "Cookies": {
+      "Behavior": "reject-tracker-and-partition-foreign",
+      "Locked": false
+    },
+    "FirefoxHome": {
+      "Search": true,
+      "TopSites": false,
+      "SponsoredTopSites": false,
+      "Highlights": false,
+      "Pocket": false,
+      "SponsoredPocket": false,
+      "Snippets": false,
+      "Locked": false
+    },
+    "FirefoxSuggest": {
+      "WebSuggestions": false,
+      "SponsoredSuggestions": false,
+      "ImproveSuggest": false,
+      "Locked": false
+    },
+    "UserMessaging": {
+      "ExtensionRecommendations": false,
+      "FeatureRecommendations": false,
+      "SkipOnboarding": true,
+      "MoreFromMozilla": false,
+      "Locked": false
+    },
+    "SearchEngines": {
+      "Default": "DuckDuckGo"
+    },
+    "Preferences": {
+      "browser.contentblocking.category": { "Value": "strict", "Status": "default" },
+      "privacy.globalprivacycontrol.enabled": { "Value": true, "Status": "default" },
+      "privacy.donottrackheader.enabled": { "Value": true, "Status": "default" },
+      "datareporting.healthreport.uploadEnabled": { "Value": false, "Status": "locked" },
+      "browser.newtabpage.activity-stream.showSponsored": { "Value": false, "Status": "default" },
+      "browser.newtabpage.activity-stream.showSponsoredTopSites": { "Value": false, "Status": "default" },
+      "media.peerconnection.ice.default_address_only": { "Value": true, "Status": "default" },
+      "geo.enabled": { "Value": false, "Status": "default" }
+    }
+  }
+}

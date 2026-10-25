@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DarkYour Welcome
+Exec=darkyour-welcome --autostart
+Icon=/usr/share/darkyour/darkyour-logo-128.png
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,49 @@
+name: Сборка DarkYour ISO
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Освобождаю место на диске
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h /
+
+      - name: Скачиваю проект
+        uses: actions/checkout@v4
+
+      - name: Собираю ISO (Debian trixie + live-build)
+        run: |
+          sudo docker run --rm --privileged \
+            -v "$PWD":/build \
+            debian:trixie \
+            bash /build/scripts/build-in-docker.sh
+
+      - name: Переименовываю образ
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" .
+          mv darkyour-amd64.hybrid.iso "DarkYour-$(date +%Y.%m.%d).iso"
+          ls -lh *.iso
+
+      - name: Выкладываю ISO для скачивания
+        uses: actions/upload-artifact@v4
+        with:
+          name: DarkYour-ISO
+          path: "*.iso"
+          compression-level: 0
+          retention-days: 14
+
+      - name: Лог сборки (если что-то сломалось)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore

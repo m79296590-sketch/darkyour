@@ -1,0 +1,121 @@
+#!/bin/sh
+# DarkYour: финальная настройка системы внутри образа
+set -e
+echo "I: DarkYour hook start"
+
+# --- Права на наши программы ---
+chmod 755 /usr/bin/darkyour-welcome /usr/bin/darkyour-blocklist
+
+# --- Название системы ---
+rm -f /etc/os-release
+cat > /etc/os-release <<'EOF'
+PRETTY_NAME="DarkYour 1.0"
+NAME="DarkYour"
+VERSION_ID="1.0"
+VERSION="1.0"
+VERSION_CODENAME=trixie
+ID=debian
+ID_LIKE=debian
+HOME_URL="https://github.com/"
+LOGO=darkyour
+EOF
+printf "%s\n" "DarkYour 1.0 \\n \\l" > /etc/issue
+echo "DarkYour 1.0" > /etc/issue.net
+
+# --- Обои по умолчанию (на случай, если XFCE возьмёт системные) ---
+if [ -d /usr/share/images/desktop-base ]; then
+	update-alternatives --install /usr/share/images/desktop-base/desktop-background \
+		desktop-background /usr/share/backgrounds/darkyour/darkyour.png 100 || true
+	update-alternatives --set desktop-background /usr/share/backgrounds/darkyour/darkyour.png || true
+fi
+
+# --- Экран входа ---
+mkdir -p /etc/lightdm
+cat > /etc/lightdm/lightdm-gtk-greeter.conf <<'EOF'
+[greeter]
+background=/usr/share/backgrounds/darkyour/darkyour.png
+theme-name=Greybird-dark
+icon-theme-name=Papirus-Dark
+font-name=Noto Sans 11
+default-user-image=/usr/share/darkyour/darkyour-logo-128.png
+indicators=~host;~spacer;~clock;~spacer;~layout;~power
+clock-format=%H:%M
+position=50%,center 50%,center
+EOF
+
+# --- Фаервол: всё входящее закрыто ---
+if [ -f /etc/ufw/ufw.conf ]; then
+	sed -i 's/^ENABLED=.*/ENABLED=yes/' /etc/ufw/ufw.conf
+	sed -i 's/^DEFAULT_INPUT_POLICY=.*/DEFAULT_INPUT_POLICY="DROP"/' /etc/default/ufw || true
+	sed -i 's/^DEFAULT_OUTPUT_POLICY=.*/DEFAULT_OUTPUT_POLICY="ACCEPT"/' /etc/default/ufw || true
+	systemctl enable ufw.service || true
+fi
+
+# --- Блокировка трекеров и рекламы ---
+BL=/usr/share/darkyour/blocklist.hosts
+if curl -fsSL --retry 3 -m 120 \
+	https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts -o /tmp/hosts.raw; then
+	grep -E '^0\.0\.0\.0[[:space:]]+[A-Za-z0-9]' /tmp/hosts.raw \
+		| grep -vE '[[:space:]](0\.0\.0\.0|localhost)$' > "$BL" || true
+	echo "I: blocklist: $(wc -l < "$BL") доменов"
+else
+	echo "W: не удалось скачать блок-лист, пропускаю"
+fi
+rm -f /tmp/hosts.raw
+systemctl enable darkyour-blocklist.service || true
+
+# --- Никакой телеметрии ---
+apt-get purge -y popularity-contest reportbug 2>/dev/null || true
+
+# --- Firefox: политики приватности ---
+if [ -d /usr/lib/firefox-esr ]; then
+	mkdir -p /usr/lib/firefox-esr/distribution
+	cp /etc/firefox/policies/policies.json /usr/lib/firefox-esr/distribution/policies.json
+fi
+
+# --- Установщик Calamares с брендингом DarkYour ---
+if [ -d /etc/calamares/branding/debian ]; then
+	rm -rf /etc/calamares/branding/darkyour
+	cp -a /etc/calamares/branding/debian /etc/calamares/branding/darkyour
+	B=/etc/calamares/branding/darkyour/branding.desc
+	cp /usr/share/darkyour/darkyour-logo-128.png /etc/calamares/branding/darkyour/darkyour-logo.png
+	cp /usr/share/darkyour/darkyour-logo-512.png /etc/calamares/branding/darkyour/darkyour-welcome.png
+	sed -i \
+		-e 's/^componentName:.*/componentName:  darkyour/' \
+		-e 's/^\( *productName:\).*/\1         DarkYour/' \
+		-e 's/^\( *shortProductName:\).*/\1    DarkYour/' \
+		-e 's/^\( *versionedName:\).*/\1       DarkYour 1.0/' \
+		-e 's/^\( *shortVersionedName:\).*/\1  DarkYour 1.0/' \
+		-e 's/^\( *bootloaderEntryName:\).*/\1 DarkYour/' \
+		-e 's/^\( *productLogo:\).*/\1         "darkyour-logo.png"/' \
+		-e 's/^\( *productIcon:\).*/\1         "darkyour-logo.png"/' \
+		-e 's/^\( *productWelcome:\).*/\1      "darkyour-welcome.png"/' \
+		-e 's/^\( *sidebarBackground:\).*/\1    "#0d0d14"/' \
+		-e 's/^\( *sidebarText:\).*/\1          "#d6d6e0"/' \
+		-e 's/^\( *sidebarTextSelect:\).*/\1    "#05060a"/' \
+		-e 's/^\( *sidebarTextHighlight:\).*/\1 "#22d3ee"/' \
+		-e 's/^\( *sidebarSelect:\).*/\1        "#22d3ee"/' \
+		"$B"
+	sed -i 's/^branding:.*/branding: darkyour/' /etc/calamares/settings.conf || true
+fi
+
+# Ярлык установщика в меню
+cat > /usr/share/applications/darkyour-install.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Установить DarkYour
+Comment=Установить систему на компьютер
+TryExec=calamares
+Exec=sh -c "sudo -E calamares || pkexec calamares"
+Icon=/usr/share/darkyour/darkyour-logo-128.png
+Terminal=false
+Categories=System;
+EOF
+
+# Иконка логотипа как системная
+mkdir -p /usr/share/icons/hicolor/128x128/apps /usr/share/icons/hicolor/256x256/apps
+cp /usr/share/darkyour/darkyour-logo-128.png /usr/share/icons/hicolor/128x128/apps/darkyour.png
+cp /usr/share/darkyour/darkyour-logo-256.png /usr/share/icons/hicolor/256x256/apps/darkyour.png
+gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
+
+echo "I: DarkYour hook done"

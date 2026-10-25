@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-terminal" version="1.0">
+  <property name="font-name" type="string" value="JetBrains Mono 11"/>
+  <property name="font-use-system" type="bool" value="false"/>
+  <property name="color-use-theme" type="bool" value="false"/>
+  <property name="color-background" type="string" value="#0b0b10"/>
+  <property name="color-foreground" type="string" value="#d6d6e0"/>
+  <property name="color-cursor" type="string" value="#22d3ee"/>
+  <property name="color-cursor-use-default" type="bool" value="false"/>
+  <property name="color-bold-is-bright" type="bool" value="true"/>
+  <property name="color-palette" type="string" value="#15151f;#f7768e;#4ade80;#facc15;#60a5fa;#a78bfa;#22d3ee;#c9c9d6;#3a3a50;#ff8fa3;#86efac;#fde68a;#93c5fd;#c4b5fd;#67e8f9;#ffffff"/>
+  <property name="misc-show-unsafe-paste-dialog" type="bool" value="true"/>
+  <property name="misc-menubar-default" type="bool" value="false"/>
+  <property name="scrolling-bar" type="string" value="TERMINAL_SCROLLBAR_NONE"/>
+</channel>
