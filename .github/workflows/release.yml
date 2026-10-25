@@ -1,0 +1,62 @@
+name: Выпуск релиза DarkYour
+
+# Берёт готовый ISO из уже прошедшей сборки и публикует его в Releases.
+# Запуск: Actions → «Выпуск релиза DarkYour» → Run workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "ID сборки (число из адреса страницы сборки)"
+        required: true
+      tag:
+        description: "Версия, например v1.0"
+        required: true
+        default: "v1.0"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Беру ISO из сборки
+        uses: actions/download-artifact@v4
+        with:
+          name: DarkYour-ISO
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: iso
+
+      - name: Считаю контрольную сумму
+        run: |
+          cd iso
+          ls -lh
+          sha256sum *.iso > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Публикую релиз
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          cat > notes.md <<'EOF'
+          ## DarkYour — приватная ОС на базе Debian 13
+
+          **Что внутри:** рабочий стол XFCE в тёмном неоне, Firefox с защитой от слежки и uBlock Origin,
+          блокировка трекеров во всей системе, включённый фаервол, случайный MAC в Wi-Fi,
+          установщик с шифрованием диска.
+
+          ### Как запустить
+          1. Скачай `.iso` ниже
+          2. VirtualBox → Создать → Linux / Debian (64-bit), 4 ГБ памяти, 2 ядра, диск 25 ГБ
+          3. Дисплей → VMSVGA, видеопамять 128 МБ → Запустить
+
+          Или запиши ISO на флешку через Rufus / balenaEtcher.
+          EOF
+          gh release create "$TAG" iso/*.iso iso/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "DarkYour ${TAG#v}" \
+            --notes-file notes.md
