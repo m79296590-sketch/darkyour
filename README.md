@@ -51,3 +51,10 @@ scripts/build-in-docker.sh       сборка внутри Debian
 scripts/make-art.py              генератор логотипа и обоев
 .github/workflows/build.yml      автосборка на GitHub
 ```
+
+## Иконки DarkYour
+
+Своя тема иконок в неоновом стиле (SVG, генерируется скриптом `scripts/make-icons.py`).
+Всё, чего нет в теме, берётся из Papirus-Dark.
+
+![Иконки DarkYour](docs/icons-preview.png)

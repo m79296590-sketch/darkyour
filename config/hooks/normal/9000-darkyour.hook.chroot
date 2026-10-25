@@ -35,7 +35,7 @@ cat > /etc/lightdm/lightdm-gtk-greeter.conf <<'EOF'
 [greeter]
 background=/usr/share/backgrounds/darkyour/darkyour.png
 theme-name=Greybird-dark
-icon-theme-name=Papirus-Dark
+icon-theme-name=DarkYour
 font-name=Noto Sans 11
 default-user-image=/usr/share/darkyour/darkyour-logo-128.png
 indicators=~host;~spacer;~clock;~spacer;~layout;~power
@@ -117,5 +117,6 @@ mkdir -p /usr/share/icons/hicolor/128x128/apps /usr/share/icons/hicolor/256x256/
 cp /usr/share/darkyour/darkyour-logo-128.png /usr/share/icons/hicolor/128x128/apps/darkyour.png
 cp /usr/share/darkyour/darkyour-logo-256.png /usr/share/icons/hicolor/256x256/apps/darkyour.png
 gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/DarkYour 2>/dev/null || true
 
 echo "I: DarkYour hook done"

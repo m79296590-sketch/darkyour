@@ -1,0 +1,20 @@
+[Icon Theme]
+Name=DarkYour
+Comment=Неоновые иконки DarkYour
+Inherits=Papirus-Dark,Adwaita,hicolor
+Example=folder
+Directories=scalable/apps,scalable/places
+
+[scalable/apps]
+Context=Applications
+Size=64
+MinSize=16
+MaxSize=512
+Type=Scalable
+
+[scalable/places]
+Context=Places
+Size=64
+MinSize=16
+MaxSize=512
+Type=Scalable
