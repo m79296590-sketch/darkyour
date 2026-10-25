@@ -48,8 +48,10 @@ jobs:
         if: failure()
         run: |
           f=run.log; [ -s build.log ] && f=build.log
-          msg="$(tail -n 60 "$f" | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
-          echo "::error title=Конец лога сборки::${msg}"
+          clean() { tr '\r' '\n' | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' | grep -v '^[[:space:]]*$'; }
+          enc() { sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}'; }
+          echo "::error title=Конец лога сборки::$(clean < "$f" | tail -n 45 | enc)"
+          echo "::error title=Строки с ошибками::$(clean < "$f" | grep -iE '(^E:|^W:|error|failed|unable|cannot|not found)' | tail -n 30 | enc)"
 
       - name: Лог сборки (если что-то сломалось)
         if: failure()
