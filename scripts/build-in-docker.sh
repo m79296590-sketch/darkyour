@@ -46,7 +46,7 @@ if [ -d /usr/share/live/build/bootloaders ]; then
 	for bl in /usr/share/live/build/bootloaders/*; do
 		name="$(basename "$bl")"
 		rm -rf "config/bootloaders/$name"
-		cp -aL "$bl" "config/bootloaders/$name"
+		cp -a "$bl" "config/bootloaders/$name"
 	done
 	# фоновые картинки
 	while IFS= read -r f; do
@@ -62,7 +62,7 @@ if [ -d /usr/share/live/build/bootloaders ]; then
 					"$w" "$h" "$w" "$h" "$(base64 -w0 "$src")" > "$f" ;;
 		esac
 		echo "  фон: $f"
-	done < <(find config/bootloaders -type f \( -name 'splash*.png' -o -name 'splash*.svg' -o -name 'splash*.svg.in' \))
+	done < <(find config/bootloaders -type f ! -type l \( -name 'splash*.png' -o -name 'splash*.svg' -o -name 'splash*.svg.in' \))
 	# надписи «Live system» → «DarkYour»
 	grep -rlI "Live system" config/bootloaders /usr/lib/live/build 2>/dev/null | while IFS= read -r f; do
 		sed -i 's/Live system/DarkYour/g' "$f"
