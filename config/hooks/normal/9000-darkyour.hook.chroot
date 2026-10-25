@@ -7,20 +7,21 @@ echo "I: DarkYour hook start"
 chmod 755 /usr/bin/darkyour-welcome /usr/bin/darkyour-blocklist
 
 # --- Название системы ---
+V=$(cat /usr/share/darkyour/version 2>/dev/null || echo "1.0")
 rm -f /etc/os-release
-cat > /etc/os-release <<'EOF'
-PRETTY_NAME="DarkYour 1.0"
+cat > /etc/os-release <<EOF
+PRETTY_NAME="DarkYour $V"
 NAME="DarkYour"
-VERSION_ID="1.0"
-VERSION="1.0"
+VERSION_ID="$V"
+VERSION="$V"
 VERSION_CODENAME=trixie
 ID=debian
 ID_LIKE=debian
-HOME_URL="https://github.com/"
+HOME_URL="https://github.com/m79296590-sketch/darkyour"
 LOGO=darkyour
 EOF
-printf "%s\n" "DarkYour 1.0 \\n \\l" > /etc/issue
-echo "DarkYour 1.0" > /etc/issue.net
+printf "%s\n" "DarkYour $V \\n \\l" > /etc/issue
+echo "DarkYour $V" > /etc/issue.net
 
 # --- Обои по умолчанию (на случай, если XFCE возьмёт системные) ---
 if [ -d /usr/share/images/desktop-base ]; then
@@ -34,7 +35,7 @@ mkdir -p /etc/lightdm
 cat > /etc/lightdm/lightdm-gtk-greeter.conf <<'EOF'
 [greeter]
 background=/usr/share/backgrounds/darkyour/darkyour.png
-theme-name=Greybird-dark
+theme-name=DarkYour
 icon-theme-name=DarkYour
 font-name=Noto Sans 11
 default-user-image=/usr/share/darkyour/darkyour-logo-128.png
@@ -84,8 +85,8 @@ if [ -d /etc/calamares/branding/debian ]; then
 		-e 's/^componentName:.*/componentName:  darkyour/' \
 		-e 's/^\( *productName:\).*/\1         DarkYour/' \
 		-e 's/^\( *shortProductName:\).*/\1    DarkYour/' \
-		-e 's/^\( *versionedName:\).*/\1       DarkYour 1.0/' \
-		-e 's/^\( *shortVersionedName:\).*/\1  DarkYour 1.0/' \
+		-e 's/^\( *versionedName:\).*/\1       DarkYour '"$V"'/' \
+		-e 's/^\( *shortVersionedName:\).*/\1  DarkYour '"$V"'/' \
 		-e 's/^\( *bootloaderEntryName:\).*/\1 DarkYour/' \
 		-e 's/^\( *productLogo:\).*/\1         "darkyour-logo.png"/' \
 		-e 's/^\( *productIcon:\).*/\1         "darkyour-logo.png"/' \
@@ -118,5 +119,39 @@ cp /usr/share/darkyour/darkyour-logo-128.png /usr/share/icons/hicolor/128x128/ap
 cp /usr/share/darkyour/darkyour-logo-256.png /usr/share/icons/hicolor/256x256/apps/darkyour.png
 gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
 gtk-update-icon-cache -f /usr/share/icons/DarkYour 2>/dev/null || true
+
+
+# --- 1.2: Магазин приложений с Flathub ---
+if command -v flatpak >/dev/null 2>&1; then
+	flatpak remote-add --system --if-not-exists flathub \
+		https://dl.flathub.org/repo/flathub.flatpakrepo || echo "W: Flathub не подключился"
+fi
+
+# --- 1.2: Тёмный режим для GTK4-приложений ---
+command -v dconf >/dev/null 2>&1 && dconf update || true
+
+# Ярлык «Магазин приложений» с понятным названием
+if [ -f /usr/share/applications/org.gnome.Software.desktop ]; then
+	sed -i 's/^Name\[ru\]=.*/Name[ru]=Магазин приложений/' /usr/share/applications/org.gnome.Software.desktop
+	grep -q '^Name\[ru\]=' /usr/share/applications/org.gnome.Software.desktop || \
+		sed -i '0,/^Name=/s//Name[ru]=Магазин приложений\nName=/' /usr/share/applications/org.gnome.Software.desktop
+fi
+
+
+# --- 1.2: Экран загрузки ---
+if command -v plymouth-set-default-theme >/dev/null 2>&1 && [ -d /usr/share/plymouth/themes/darkyour ]; then
+	plymouth-set-default-theme darkyour || true
+	mkdir -p /etc/plymouth
+	printf "[Daemon]\nTheme=darkyour\nShowDelay=0\n" > /etc/plymouth/plymouthd.conf
+	update-initramfs -u -k all || true
+fi
+# Для установленной системы: экран загрузки и название в меню GRUB
+if [ -f /etc/default/grub ]; then
+	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' /etc/default/grub
+	sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="DarkYour"/' /etc/default/grub
+else
+	mkdir -p /etc/default/grub.d
+	printf 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"\nGRUB_DISTRIBUTOR="DarkYour"\n' > /etc/default/grub.d/90-darkyour.cfg
+fi
 
 echo "I: DarkYour hook done"

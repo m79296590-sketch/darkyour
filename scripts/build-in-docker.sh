@@ -35,6 +35,41 @@ echo "==> Права на скрипты"
 chmod +x auto/* config/hooks/normal/*.hook.chroot \
 	config/includes.chroot/usr/bin/* 2>/dev/null || true
 
+echo "==> Версия"
+VERSION="$(cat VERSION 2>/dev/null || echo dev)"
+echo "$VERSION" > config/includes.chroot/usr/share/darkyour/version
+echo "DarkYour $VERSION"
+
+echo "==> Брендинг меню загрузки"
+if [ -d /usr/share/live/build/bootloaders ]; then
+	mkdir -p config/bootloaders
+	for bl in /usr/share/live/build/bootloaders/*; do
+		name="$(basename "$bl")"
+		rm -rf "config/bootloaders/$name"
+		cp -aL "$bl" "config/bootloaders/$name"
+	done
+	# фоновые картинки
+	while IFS= read -r f; do
+		case "$f" in
+			*syslinux*|*isolinux*|*extlinux*) src=assets/boot/splash-640x480.png ;;
+			*) src=assets/boot/splash-1024x768.png ;;
+		esac
+		case "$f" in
+			*.png) cp "$src" "$f" ;;
+			*.svg|*.svg.in)
+				case "$src" in *640x480*) w=640; h=480 ;; *) w=1024; h=768 ;; esac
+				printf '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%s" height="%s"><image width="%s" height="%s" xlink:href="data:image/png;base64,%s"/></svg>\n' \
+					"$w" "$h" "$w" "$h" "$(base64 -w0 "$src")" > "$f" ;;
+		esac
+		echo "  фон: $f"
+	done < <(find config/bootloaders -type f \( -name 'splash*.png' -o -name 'splash*.svg' -o -name 'splash*.svg.in' \))
+	# надписи «Live system» → «DarkYour»
+	grep -rlI "Live system" config/bootloaders /usr/lib/live/build 2>/dev/null | while IFS= read -r f; do
+		sed -i 's/Live system/DarkYour/g' "$f"
+		echo "  текст: $f"
+	done || true
+fi
+
 echo "==> Сборка"
 lb clean --purge || true
 lb config

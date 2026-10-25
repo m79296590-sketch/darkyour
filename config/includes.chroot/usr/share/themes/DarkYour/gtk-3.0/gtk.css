@@ -1,0 +1,258 @@
+/* =========================================================
+   DarkYour — тема интерфейса (GTK3)
+   Основа: Adwaita-dark, поверх — цвета и детали DarkYour.
+   ========================================================= */
+@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
+
+@define-color dy_bg        #0f0f17;
+@define-color dy_bg_deep   #0b0b10;
+@define-color dy_surface   #13131c;
+@define-color dy_raised    #1a1a26;
+@define-color dy_border    #2c2c44;
+@define-color dy_border_lo #22223a;
+@define-color dy_text      #d6d6e0;
+@define-color dy_muted     #8a8aa3;
+@define-color dy_cyan      #22d3ee;
+@define-color dy_violet    #a78bfa;
+@define-color dy_rose      #f7768e;
+
+/* Цвета для приложений, которые берут их из темы */
+@define-color theme_bg_color @dy_bg;
+@define-color theme_fg_color @dy_text;
+@define-color theme_base_color @dy_surface;
+@define-color theme_text_color @dy_text;
+@define-color theme_selected_bg_color @dy_cyan;
+@define-color theme_selected_fg_color #05060a;
+@define-color insensitive_bg_color @dy_bg;
+@define-color insensitive_fg_color #5a5a72;
+@define-color borders @dy_border;
+@define-color unfocused_borders @dy_border_lo;
+@define-color accent_color @dy_cyan;
+@define-color accent_bg_color @dy_cyan;
+@define-color accent_fg_color #05060a;
+
+/* ---------- Базовые поверхности ---------- */
+window, .background, dialog .dialog-action-area {
+  background-color: @dy_bg;
+  color: @dy_text;
+}
+.view, textview text, iconview, treeview.view, list, .content-view,
+scrolledwindow viewport.frame, .frame {
+  background-color: @dy_surface;
+  color: @dy_text;
+}
+frame > border, .frame, scrolledwindow.frame, separator {
+  border-color: @dy_border_lo;
+}
+separator { background-color: @dy_border_lo; }
+label.dim-label, .dim-label { color: @dy_muted; }
+link, *:link { color: @dy_cyan; }
+
+/* ---------- Выделение ---------- */
+selection, *:selected, entry selection, textview text selection {
+  background-color: @dy_cyan;
+  color: #05060a;
+}
+.view:selected, treeview.view:selected, iconview:selected,
+list row:selected, flowbox flowboxchild:selected {
+  background-color: alpha(@dy_cyan, 0.18);
+  color: #ffffff;
+}
+.view:selected:focus, treeview.view:selected:focus, iconview:selected:focus,
+list row:selected:focus {
+  background-color: alpha(@dy_cyan, 0.26);
+}
+list row:hover, treeview.view:hover { background-color: alpha(@dy_cyan, 0.06); }
+
+/* ---------- Заголовки окон приложений (CSD) ---------- */
+headerbar, .titlebar:not(headerbar) {
+  background-image: none;
+  background-color: @dy_surface;
+  border-color: @dy_border_lo;
+  box-shadow: none;
+  color: @dy_text;
+}
+headerbar:backdrop { background-color: #0e0e15; }
+headerbar .title { font-weight: 600; }
+headerbar .subtitle { color: @dy_muted; }
+
+/* ---------- Боковые панели (проводник и др.) ---------- */
+.sidebar, placessidebar, placessidebar list, .thunar .sidebar,
+stacksidebar, stacksidebar list {
+  background-color: @dy_bg_deep;
+  border-color: @dy_border_lo;
+}
+placessidebar row, stacksidebar row {
+  border-radius: 8px;
+  margin: 1px 6px;
+  min-height: 32px;
+}
+placessidebar row:selected, stacksidebar row:selected,
+.sidebar row:selected, .sidebar .view:selected {
+  background-color: alpha(@dy_cyan, 0.14);
+  color: @dy_cyan;
+}
+placessidebar row:selected image, stacksidebar row:selected image { color: @dy_cyan; }
+
+/* ---------- Кнопки ---------- */
+button {
+  background-image: none;
+  background-color: @dy_raised;
+  border: 1px solid @dy_border;
+  border-radius: 8px;
+  box-shadow: none;
+  text-shadow: none;
+  color: @dy_text;
+}
+button:hover {
+  background-color: #1c2430;
+  border-color: alpha(@dy_cyan, 0.7);
+}
+button:active, button:checked {
+  background-color: #1f2c38;
+  border-color: @dy_cyan;
+  color: #ffffff;
+}
+button:disabled { background-color: @dy_bg; color: #5a5a72; border-color: @dy_border_lo; }
+button.flat, headerbar button.flat, .toolbar button, toolbar button {
+  background-color: transparent;
+  border-color: transparent;
+}
+button.flat:hover, toolbar button:hover, headerbar button:hover {
+  background-color: alpha(@dy_cyan, 0.10);
+  border-color: transparent;
+}
+button.suggested-action, button.default:not(.flat) {
+  background-color: @dy_cyan;
+  border-color: @dy_cyan;
+  color: #05060a;
+  font-weight: 600;
+}
+button.suggested-action:hover { background-color: #5ee3f5; }
+button.destructive-action {
+  background-color: @dy_rose;
+  border-color: @dy_rose;
+  color: #05060a;
+}
+
+/* ---------- Поля ввода ---------- */
+entry, spinbutton:not(.vertical), searchbar entry {
+  background-image: none;
+  background-color: @dy_bg_deep;
+  border: 1px solid @dy_border;
+  border-radius: 8px;
+  box-shadow: none;
+  color: @dy_text;
+}
+entry:focus, spinbutton:focus {
+  border-color: @dy_cyan;
+  box-shadow: inset 0 0 0 1px alpha(@dy_cyan, 0.35);
+}
+entry image { color: @dy_muted; }
+
+/* ---------- Переключатели, галочки, ползунки ---------- */
+switch { background-color: @dy_raised; border-color: @dy_border; }
+switch:checked { background-color: @dy_cyan; border-color: @dy_cyan; }
+switch slider { background-color: #e8e8f0; border-color: transparent; box-shadow: none; }
+check:checked, radio:checked,
+checkbutton check:checked, radiobutton radio:checked {
+  background-color: @dy_cyan;
+  border-color: @dy_cyan;
+  color: #05060a;
+}
+scale trough { background-color: @dy_raised; }
+scale highlight, progressbar progress, levelbar block.filled {
+  background-color: @dy_cyan;
+  border-color: @dy_cyan;
+}
+progressbar trough, levelbar trough { background-color: @dy_raised; }
+
+/* ---------- Полосы прокрутки ---------- */
+scrollbar { background-color: transparent; border: none; }
+scrollbar slider { background-color: #3a3a52; border-radius: 8px; }
+scrollbar slider:hover { background-color: @dy_muted; }
+scrollbar slider:active { background-color: @dy_cyan; }
+
+/* ---------- Меню, всплывающие окна, подсказки ---------- */
+menu, .menu, .context-menu, popover, popover.background,
+.csd menu, .csd popover {
+  background-color: @dy_surface;
+  border: 1px solid @dy_border;
+  border-radius: 10px;
+  color: @dy_text;
+}
+menuitem, modelbutton { border-radius: 6px; }
+menuitem:hover, modelbutton:hover, menu menuitem:hover {
+  background-color: alpha(@dy_cyan, 0.15);
+  color: #ffffff;
+}
+menubar { background-color: @dy_bg; }
+menubar > menuitem:hover { box-shadow: inset 0 -2px @dy_cyan; background-color: transparent; }
+tooltip, tooltip.background {
+  background-color: @dy_surface;
+  border: 1px solid @dy_border;
+  border-radius: 8px;
+  color: @dy_text;
+}
+
+/* ---------- Вкладки ---------- */
+notebook > header { background-color: @dy_bg_deep; border-color: @dy_border_lo; }
+notebook > header tab { color: @dy_muted; }
+notebook > header tab:hover { color: @dy_text; box-shadow: inset 0 -2px alpha(@dy_cyan, 0.4); }
+notebook > header tab:checked { color: @dy_text; box-shadow: inset 0 -2px @dy_cyan; }
+notebook > stack:not(:only-child) { background-color: @dy_surface; }
+
+/* ---------- Списки с заголовками колонок ---------- */
+treeview.view header button {
+  background-color: @dy_bg;
+  border-color: @dy_border_lo;
+  border-radius: 0;
+  color: @dy_muted;
+}
+
+/* =========================================================
+   XFCE: панель и меню «Пуск»
+   ========================================================= */
+.xfce4-panel {
+  background-color: #0d0d14;
+  border-top: 1px solid @dy_border_lo;
+}
+.xfce4-panel button {
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+}
+.xfce4-panel button:hover { background-color: alpha(@dy_cyan, 0.10); }
+.xfce4-panel button:checked,
+.xfce4-panel button:active {
+  background-color: alpha(@dy_cyan, 0.12);
+  box-shadow: inset 0 2px @dy_cyan;
+  border-radius: 0 0 6px 6px;
+}
+.xfce4-panel label { color: @dy_text; }
+
+#whiskermenu-window, #whiskermenu-window .view, #whiskermenu-window treeview {
+  background-color: #0d0d14;
+}
+#whiskermenu-window button:hover,
+#whiskermenu-window treeview:selected,
+#whiskermenu-window iconview:selected {
+  background-color: alpha(@dy_cyan, 0.16);
+  color: #ffffff;
+}
+#whiskermenu-window entry { background-color: @dy_surface; }
+
+/* Окна уведомлений */
+#XfceNotifyWindow {
+  background-color: @dy_surface;
+  border: 1px solid @dy_border;
+  border-radius: 12px;
+}
+#XfceNotifyWindow progressbar progress { background-color: @dy_cyan; }
+
+/* Рабочий стол: подписи значков */
+XfdesktopIconView.view { background-color: transparent; color: #e8e8f0; }
+XfdesktopIconView.view:selected {
+  background-color: alpha(@dy_cyan, 0.22);
+  border-radius: 8px;
+}

@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=DarkYour
+Description=Экран загрузки DarkYour
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/darkyour
+ScriptFile=/usr/share/plymouth/themes/darkyour/darkyour.script

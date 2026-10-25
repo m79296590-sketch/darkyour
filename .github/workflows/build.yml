@@ -29,13 +29,16 @@ jobs:
       - name: Переименовываю образ
         run: |
           sudo chown -R "$(id -u):$(id -g)" .
-          mv darkyour-amd64.hybrid.iso "DarkYour-$(date +%Y.%m.%d).iso"
+          V="$(cat VERSION)"
+          NAME="DarkYour-${V}-build${{ github.run_number }}"
+          mv darkyour-amd64.hybrid.iso "${NAME}.iso"
+          echo "ISO_NAME=${NAME}" >> "$GITHUB_ENV"
           ls -lh *.iso
 
       - name: Выкладываю ISO для скачивания
         uses: actions/upload-artifact@v4
         with:
-          name: DarkYour-ISO
+          name: ${{ env.ISO_NAME }}
           path: "*.iso"
           compression-level: 0
           retention-days: 14

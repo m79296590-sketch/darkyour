@@ -22,6 +22,7 @@
         <value type="int" value="2"/>
         <value type="int" value="3"/>
         <value type="int" value="4"/>
+        <value type="int" value="12"/>
         <value type="int" value="5"/>
         <value type="int" value="6"/>
         <value type="int" value="7"/>
@@ -47,6 +48,11 @@
     <property name="plugin-4" type="string" value="launcher">
       <property name="items" type="array">
         <value type="string" value="darkyour-terminal.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-12" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="darkyour-store.desktop"/>
       </property>
     </property>
     <property name="plugin-5" type="string" value="separator">

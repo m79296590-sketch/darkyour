@@ -1,4 +1,4 @@
-favorites=darkyour-welcome.desktop,firefox-esr.desktop,thunar.desktop,xfce4-terminal.desktop,xfce-settings-manager.desktop
+favorites=darkyour-welcome.desktop,firefox-esr.desktop,thunar.desktop,org.gnome.Software.desktop,libreoffice-writer.desktop,vlc.desktop,xfce4-terminal.desktop,xfce-settings-manager.desktop
 button-title=DarkYour
 button-icon=/usr/share/darkyour/darkyour-logo-64.png
 show-button-title=false

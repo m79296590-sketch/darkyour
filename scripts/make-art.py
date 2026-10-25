@@ -125,6 +125,7 @@ if __name__ == "__main__":
     for size in (512, 256, 128, 64, 48):
         logo(size).save(f"{OUT_SHARE}/darkyour-logo-{size}.png")
     logo(256).save(f"{OUT_SHARE}/darkyour-logo.png")
-    wallpaper().save(f"{OUT_BG}/darkyour.png", optimize=True)
-    wallpaper(2560, 1440).save(f"{OUT_BG}/darkyour-2k.png", optimize=True)
+    # обои теперь в scripts/make-wallpaper.py
+    pass  # wallpaper().save(f"{OUT_BG}/darkyour.png", optimize=True)
+    # wallpaper(2560, 1440).save(f"{OUT_BG}/darkyour-2k.png", optimize=True)
     print("ok")

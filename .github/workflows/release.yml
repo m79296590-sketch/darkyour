@@ -25,7 +25,8 @@ jobs:
       - name: Беру ISO из сборки
         uses: actions/download-artifact@v4
         with:
-          name: DarkYour-ISO
+          pattern: DarkYour-*
+          merge-multiple: true
           run-id: ${{ inputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: iso

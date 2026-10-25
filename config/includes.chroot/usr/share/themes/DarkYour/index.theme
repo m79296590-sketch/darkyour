@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=DarkYour
+Comment=Тёмный неон и минимализм — тема DarkYour
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=DarkYour
+MetacityTheme=DarkYour
+IconTheme=DarkYour
+ButtonLayout=menu:minimize,maximize,close

@@ -9,7 +9,11 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, GdkPixbuf, Gtk  # noqa: E402
 
-VERSION = "1.0"
+try:
+    with open("/usr/share/darkyour/version") as _f:
+        VERSION = _f.read().strip()
+except OSError:
+    VERSION = "1.0"
 LOGO = "/usr/share/darkyour/darkyour-logo-128.png"
 CONF_DIR = os.path.expanduser("~/.config/darkyour")
 DONE_FLAG = os.path.join(CONF_DIR, "welcome-done")

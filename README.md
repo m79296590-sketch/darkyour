@@ -13,8 +13,17 @@
 - **Приветственное окно DarkYour** со статусом защиты
 - **Установщик Calamares** с брендингом DarkYour
 - Русский язык, раскладка переключается **Alt + Shift**
+- **Своя тема окон и иконок DarkYour**, неоновые обои, свой экран загрузки
+- **Магазин приложений** с Flathub, установка `.deb` двойным кликом
+- **LibreOffice** (документы, таблицы, презентации) и **VLC**
 
-Скоро: встроенный клиент **DVS VPN**, свой экран загрузки, своя тема окон.
+Скоро: встроенный клиент **DVS VPN**.
+
+## История версий
+
+- **1.2** — своя тема окон, новые обои, экран загрузки, магазин приложений, LibreOffice, VLC
+- **1.1** — своя тема иконок
+- **1.0** — первая версия
 
 ## Как получить ISO
 
@@ -22,8 +31,8 @@ ISO собирается автоматически на серверах GitHub
 
 1. Открой вкладку **Actions** в репозитории
 2. Нажми на последнюю зелёную сборку **«Сборка DarkYour ISO»**
-3. Внизу в блоке **Artifacts** скачай **DarkYour-ISO**
-4. Распакуй zip — внутри файл `DarkYour-ГГГГ.ММ.ДД.iso`
+3. Внизу в блоке **Artifacts** скачай **DarkYour-ВЕРСИЯ-buildN**
+4. Распакуй zip — внутри файл `DarkYour-ВЕРСИЯ-buildN.iso`
 
 Пересобрать вручную: **Actions → Сборка DarkYour ISO → Run workflow**.
 
@@ -48,7 +57,12 @@ config/includes.chroot/          файлы, которые попадают в 
   usr/share/darkyour/            логотипы
   usr/share/backgrounds/         обои
 scripts/build-in-docker.sh       сборка внутри Debian
-scripts/make-art.py              генератор логотипа и обоев
+scripts/make-art.py              генератор логотипа
+scripts/make-wallpaper.py        генератор обоев
+scripts/make-icons.py            генератор иконок
+scripts/make-theme.py            генератор темы окон
+scripts/make-boot.py             экран и меню загрузки
+VERSION                          номер версии
 .github/workflows/build.yml      автосборка на GitHub
 ```
 

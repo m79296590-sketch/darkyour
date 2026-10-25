@@ -59,3 +59,27 @@ calamares-settings-debian
 python3
 python3-gi
 gir1.2-gtk-3.0
+
+# ===== 1.2: Магазин приложений и установка программ =====
+gnome-software
+gnome-software-plugin-flatpak
+flatpak
+gdebi
+packagekit
+
+# ===== 1.2: Офис и мультимедиа =====
+libreoffice-writer
+libreoffice-calc
+libreoffice-impress
+libreoffice-gtk3
+libreoffice-l10n-ru
+libreoffice-help-ru
+hunspell-ru
+vlc
+
+# ===== 1.2: Экран загрузки =====
+plymouth
+plymouth-label
+
+# ===== 1.2: Тёмный режим для новых приложений (GTK4) =====
+dconf-cli
